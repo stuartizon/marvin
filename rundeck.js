@@ -18,11 +18,14 @@ function rundeck(config) {
         finalExecutionStatus: finalExecutionStatus
     };
 
-    function request(url, user) {
+    function request(url, method, user) {
+        if (!method) method = "GET";
+
         return rp({
             baseUrl: config.rundeck_url + '/api/15',
             url: url,
             json: true,
+            method: method,
             headers: {
                 'X-Rundeck-Auth-Token': token,
                 'Accept': "application/json"
@@ -50,7 +53,7 @@ function rundeck(config) {
     }
 
     function runJob(id, user) {
-        return request("/job/" + id + "/run", user);
+        return request("/job/" + id + "/run", "POST", user);
     }
 
     function executionStatus(id) {

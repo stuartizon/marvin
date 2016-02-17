@@ -1,0 +1,6 @@
+{
+  "slack_token": "",
+  "json_file_store": "data",
+  "rundeck_url": "",
+  "rundeck_auth_token": ""
+}

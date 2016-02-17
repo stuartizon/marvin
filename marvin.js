@@ -59,7 +59,8 @@ controller.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_men
 
     rundeck.findJob(id).then(function () {
         bot.reply(message, _.sample(conversation.aliases));
-        controller.storage.channels.save({id: name, alias: id});
+        // id has to be the name of the key to save - which confusingly is the name of the alias
+        controller.storage.channels.save({id: name, job_id: id});
     }).catch(function (error) {
         console.log(error);
         replyToError(message, error.error.message);
@@ -68,43 +69,55 @@ controller.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_men
 
 controller.hears('alias list', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     controller.storage.channels.all(function (err, res) {
-        bot.reply(message, res.map(a => "\n" + a.id + " ➞ " + a.alias).join());
+        if (res.length > 0)
+            bot.reply(message, res.map(a => "\n" + a.id + " ➞ " + a.job_id).join());
+        else
+            bot.reply(message, "There aren't any aliases");
     })
 });
 
 controller.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var userInfo = promise.promisify(bot.api.users.info);
-    var id = message.match[1];
+    var job = message.match[1];
+
+    var id;
+    // First check if it's an alias
+    controller.storage.channels.get(job, function (err, res) {
+        // An alias
+        if (res) id = res.job_id;
+        // Not an alias
+        else if (err) id = job;
+    });
 
     userInfo({user: message.user})
         .then(function (res) {
             rundeck.runJob(id, res.user.name).then(function (r) {
-                console.log('exec' + JSON.stringify(r));
-                bot.reply(message, "Ok, I'm running your job for you...");
-                if (r.job.averageDuration) {
-                    bot.reply(message, "On average, this job takes about " + Math.round(parseInt(r.job.averageDuration) / 1000) + "s to complete");
-                }
+                bot.reply(message, _.sample(conversation.job_started));
+                //if (r.job.averageDuration) {
+                //    bot.reply(message, "On average, this job takes about " + Math.round(parseInt(r.job.averageDuration) / 1000) + "s to complete");
+                //}
 
                 rundeck.finalExecutionStatus(r.id).then(function (res) {
-                    //console.log(JSON.stringify(res));
                     switch (res.state) {
                         case 'succeeded':
+                            var remark = _.sample(conversation.job_success);
                             bot.reply(message, {
+                                text: remark,
                                 attachments: [{
                                     "color": "good",
-                                    fallback: "Good news!",
-                                    text: "Good news! It completed in " + Math.ceil(res.duration / 1000) + " seconds"
+                                    text: job + " completed in " + Math.ceil(res.duration / 1000) + " seconds",
+                                    fallback: remark
                                 }]
                             });
                             break;
                         case 'failed':
                         case 'aborted':
-                            bot.reply(message, "Uh oh, looks like there was a problem :-(");
+                            replyToError(message, job + " " + res.state + " in " + Math.ceil(res.duration / 1000) + " seconds");
                             break;
                     }
                 });
             }).catch(function () {
-                return replyToError(message, "Unable to run job " + id);
+                return replyToError(message, "Unable to run job " + job);
             });
         });
 });

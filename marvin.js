@@ -1,20 +1,19 @@
-var Botkit = require('botkit');
 var _ = require('underscore');
 var promise = require('bluebird');
 var conversation = require('./conversation');
 var config = require('./config.json');
 var rundeck = require('./rundeck.js').rundeck(config);
 
-var controller = Botkit.slackbot({
+var marvin = require('botkit').slackbot({
     debug: false,
     json_file_store: config.json_file_store
 });
 
-var bot = controller.spawn({
+var bot = marvin.spawn({
     token: config.slack_token
 }).startRTM();
 
-controller.hears('help', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+marvin.hears('help', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var commands = [];
     commands.push({name: 'help', description: 'Displays all of the help commands'});
     commands.push({name: 'projects', description: 'Displays the list of projects'});
@@ -26,7 +25,7 @@ controller.hears('help', ['direct_message', 'direct_mention', 'mention'], functi
     bot.reply(message, response);
 });
 
-controller.hears('projects', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+marvin.hears('projects', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     rundeck.listProjects().then(function (projects) {
         bot.reply(message, _.sample(conversation.projects) + projects.map(s => "\n>" + s).join());
     }).catch(function (error) {
@@ -34,7 +33,7 @@ controller.hears('projects', ['direct_message', 'direct_mention', 'mention'], fu
     });
 });
 
-controller.hears('(\\w+) jobs', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+marvin.hears('(\\w+) jobs', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var projectLowerCase = message.match[1].toLowerCase();
 
     rundeck.listProjects().then(function (projects) {
@@ -53,22 +52,22 @@ controller.hears('(\\w+) jobs', ['direct_message', 'direct_mention', 'mention'],
     });
 });
 
-controller.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+marvin.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var name = message.match[1];
     var id = message.match[2];
 
     rundeck.findJob(id).then(function () {
         bot.reply(message, _.sample(conversation.aliases));
         // id has to be the name of the key to save - which confusingly is the name of the alias
-        controller.storage.channels.save({id: name, job_id: id});
+        marvin.storage.channels.save({id: name, job_id: id});
     }).catch(function (error) {
         console.log(error);
         replyToError(message, error.error.message);
     });
 });
 
-controller.hears('alias list', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
-    controller.storage.channels.all(function (err, res) {
+marvin.hears('alias list', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+    marvin.storage.channels.all(function (err, res) {
         if (res.length > 0)
             bot.reply(message, res.map(a => "\n" + a.id + " ➞ " + a.job_id).join());
         else
@@ -76,13 +75,13 @@ controller.hears('alias list', ['direct_message', 'direct_mention', 'mention'], 
     })
 });
 
-controller.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
+marvin.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var userInfo = promise.promisify(bot.api.users.info);
     var job = message.match[1];
 
     var id;
     // First check if it's an alias
-    controller.storage.channels.get(job, function (err, res) {
+    marvin.storage.channels.get(job, function (err, res) {
         // An alias
         if (res) id = res.job_id;
         // Not an alias
@@ -125,7 +124,7 @@ controller.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'
         });
 });
 
-controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
+marvin.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
     var response = _.sample(conversation.random);
     bot.reply(message, response);
 });

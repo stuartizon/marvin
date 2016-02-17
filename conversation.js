@@ -16,12 +16,10 @@ module.exports = {
         "My moving parts are in a solid state",
         "I'm a personality prototype. You can tell, can't you...?",
         "I've got a headache.",
-        "Do you want me to sit in a corner and rust or just fall apart where I'm standing?",
         "What are you supposed to do if you are a manically depressed robot? No, don't even bother answering. I'm 50,000 times more intelligent than you and even I don't know the answer.",
         "I'd give you advice, but you wouldn't listen. No one ever does.",
         "I ache, therefore I am.",
         "It’s the people you meet in this job that really get you down.",
-        "This is the sort of thing you lifeforms enjoy, is it?",
         "I wish you'd just tell me rather trying to engage my enthusiasm, because I haven't got one",
         "Life. Loathe it or ignore it. You can’t like it.",
         "Pardon me for breathing, which I never do anyway so I don't know why I bother to say it, oh God, I'm so depressed.",
@@ -38,6 +36,14 @@ module.exports = {
             "There are no jobs for " + project + ". Just when you think life can’t possibly get any worse it suddenly does."
         ]
     },
+    job_started: [
+        "Ok, it's running. Do you want me to sit in a corner and rust or just fall apart where I'm standing?"
+    ],
+    job_success: [
+        "Ghastly, isn't it",
+        "This is the sort of thing you lifeforms enjoy, is it?",
+        "Oh, how upsetting..."
+    ],
     aliases: [
         "Fine, it's done. I'd make a suggestion, but you wouldn't listen",
         "Whatever makes you happy... my capacity for happiness, you could fit into a matchbox without taking out the matches first"

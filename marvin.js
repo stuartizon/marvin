@@ -93,11 +93,14 @@ controller.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'
         .then(function (res) {
             rundeck.runJob(id, res.user.name).then(function (r) {
                 bot.reply(message, _.sample(conversation.job_started));
-                //if (r.job.averageDuration) {
-                //    bot.reply(message, "On average, this job takes about " + Math.round(parseInt(r.job.averageDuration) / 1000) + "s to complete");
-                //}
+                // How often should we poll to find out job completion
+                var max_tries = 10;
+                var interval = 5000;
+                // Assume that worst case is 2 times the average
+                if (r.job.averageDuration)
+                    interval = Math.round(parseInt(r.job.averageDuration) * 2 / max_tries);
 
-                rundeck.finalExecutionStatus(r.id).then(function (res) {
+                rundeck.finalExecutionStatus(r.id, interval, max_tries).then(function (res) {
                     switch (res.state) {
                         case 'succeeded':
                             var remark = _.sample(conversation.job_success);

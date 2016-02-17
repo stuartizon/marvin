@@ -60,7 +60,10 @@ function rundeck(config) {
         return request("/execution/" + id + "/output");
     }
 
-    function finalExecutionStatus(id) {
+    function finalExecutionStatus(id, interval, max_tries) {
+        if (!interval) interval = 5000;
+        if (!max_tries) max_tries = 10;
+
         function f() {
             return executionStatus(id).then(function (response) {
                 if (response.execState === "running") throw "running";
@@ -68,6 +71,6 @@ function rundeck(config) {
             });
         }
 
-        return retry(f, {interval: 5000, max_tries: 10});
+        return retry(f, {interval: interval, max_tries: max_tries});
     }
 }

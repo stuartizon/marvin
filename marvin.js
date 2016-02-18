@@ -124,7 +124,7 @@ marvin.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], f
         });
 });
 
-marvin.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
+marvin.hears('.*', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     var response = _.sample(conversation.random);
     bot.reply(message, response);
 });

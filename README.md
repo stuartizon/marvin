@@ -1,5 +1,5 @@
 # Marvin
-Marvin is a chat bot for triggering Rundeck jobs.
+Marvin is a Slack chat bot for triggering Rundeck jobs.
 
 ### Running Marvin locally
 

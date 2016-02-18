@@ -43,9 +43,9 @@ marvin.hears('(\\w+) jobs', ['direct_message', 'direct_mention', 'mention'], fun
         else
             return rundeck.listJobs(project).then(function (jobs) {
                 if (jobs.length > 0)
-                    bot.reply(message, _.sample(conversation.jobs(project)) + jobs.map(s => "\n>" + s.name + " _(" + s.id + ")_").join());
+                    bot.reply(message, "Here are the jobs for " + project + ". " + _.sample(conversation.jobs) + jobs.map(s => "\n>" + s.name + " _(" + s.id + ")_").join());
                 else
-                    bot.reply(message, _.sample(conversation.nojobs(project)));
+                    bot.reply(message, "There are no jobs for " + project + ". " + _.sample(conversation.nojobs));
             });
     }).catch(function (error) {
         replyToError(message, error.message);
@@ -57,7 +57,7 @@ marvin.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_mention
     var id = message.match[2];
 
     rundeck.findJob(id).then(function () {
-        bot.reply(message, _.sample(conversation.aliases));
+        bot.reply(message, _.sample(conversation.alias_set));
         // id has to be the name of the key to save - which confusingly is the name of the alias
         marvin.storage.channels.save({id: name, job_id: id});
     }).catch(function (error) {
@@ -69,7 +69,7 @@ marvin.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_mention
 marvin.hears('alias list', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
     marvin.storage.channels.all(function (err, res) {
         if (res.length > 0)
-            bot.reply(message, res.map(a => "\n" + a.id + " ➞ " + a.job_id).join());
+            bot.reply(message, _.sample(conversation.aliases) + res.map(a => "\n" + a.id + " ➞ " + a.job_id).join());
         else
             bot.reply(message, "There aren't any aliases");
     })

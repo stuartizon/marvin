@@ -18,8 +18,8 @@ marvin.hears('help', ['direct_message', 'direct_mention', 'mention'], function (
     commands.push({name: 'help', description: 'Displays all of the help commands'});
     commands.push({name: 'projects', description: 'Displays the list of projects'});
     commands.push({name: '[project] jobs', description: 'Displays the list of jobs for the named project'});
-    commands.push({name: 'alias set [name] [id]', description: 'Creates a job alias name ➞ id'});
-    commands.push({name: 'alias list', description: 'Lists all the available job aliases'});
+    commands.push({name: 'alias set [name] [id]', description: 'Creates a job alias name ➞ id for this channel'});
+    commands.push({name: 'alias list', description: 'Lists all the available job aliases for this channel'});
     commands.push({name: 'run [job]', description: 'Runs the given job (either an id or an alias)'});
     var response = _.sample(conversation.help) + commands.map(c => "\n>`" + c.name + "` - " + c.description).join();
     bot.reply(message, response);
@@ -58,21 +58,29 @@ marvin.hears('alias set ([\\w-]+) ([\\w-]+)', ['direct_message', 'direct_mention
 
     rundeck.findJob(id).then(function () {
         bot.reply(message, _.sample(conversation.alias_set));
-        // id has to be the name of the key to save - which confusingly is the name of the alias
-        marvin.storage.channels.save({id: name, job_id: id});
+        marvin.storage.channels.get(message.channel, function(err, res) {
+            if (err)
+                res = {id: message.channel, aliases: {}};
+            res.aliases[name] = id;
+            marvin.storage.channels.save(res);
+        });
     }).catch(function (error) {
-        console.log(error);
         replyToError(message, error.error.message);
     });
 });
 
 marvin.hears('alias list', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
-    marvin.storage.channels.all(function (err, res) {
-        if (res.length > 0)
-            bot.reply(message, _.sample(conversation.aliases) + res.map(a => "\n" + a.id + " ➞ " + a.job_id).join());
+    marvin.storage.channels.get(message.channel, function(err, res) {
+        if (res) {
+            var aliases = [];
+            for (var a in res.aliases) {
+                aliases.push({name: a, job_id: res.aliases[a]});
+            }
+            bot.reply(message, _.sample(conversation.aliases) + aliases.map(a => "\n" + a.name + " ➞ " + a.job_id).join());
+        }
         else
             bot.reply(message, "There aren't any aliases");
-    })
+    });
 });
 
 marvin.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], function (bot, message) {
@@ -81,11 +89,13 @@ marvin.hears('run ([\\w-]+)', ['direct_message', 'direct_mention', 'mention'], f
 
     var id;
     // First check if it's an alias
-    marvin.storage.channels.get(job, function (err, res) {
+    marvin.storage.channels.get(message.channel, function(err, res) {
         // An alias
-        if (res) id = res.job_id;
+        if (res && res.aliases && res.aliases[job])
+            id = res.aliases[job];
         // Not an alias
-        else if (err) id = job;
+        else
+            id = job;
     });
 
     userInfo({user: message.user})

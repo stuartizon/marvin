@@ -79,7 +79,7 @@ marvin.hears('alias list', ['direct_message', 'direct_mention', 'mention'], func
             bot.reply(message, _.sample(conversation.aliases) + aliases.map(a => "\n" + a.name + " ➞ " + a.job_id).join());
         }
         else
-            bot.reply(message, "There aren't any aliases");
+            bot.reply(message, "There aren't any aliases in this channel");
     });
 });
 
